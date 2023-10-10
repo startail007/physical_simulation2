@@ -1,40 +1,63 @@
 import { Vector, VectorE } from "../math/Vector.js";
 export class Body {
-  constructor(x, y) {
-    this.points = [];
+  constructor(pos, density = 0, option = {}) {
+    this.type = "";
     this.color = "#00ff00";
-    this.pos = [x, y];
-    this.type = "polygon";
+    this.pos = Vector.clone(pos);
+    this.lineVel = Vector.zero();
+    this.angle = 0;
+    this.angleVel = 0;
+    this.density = density;
+    this.mass = 0;
+    this.restitution = 0;
+    this.area = 0;
+    this.inertia = 0;
+    this.isStatic = false;
+    this.points = [];
+    this._transformedPoints = [];
+    this._transformUpdateRequired = false;
+    Object.assign(this, option);
   }
-  update(dt) {
-    this.updateCenter();
+  get transformedPoints() {
+    if (this._transformUpdateRequired) {
+      this._transformedPoints = this.points.map((point) => Vector.add(Vector.rotate(point, this.angle), this.pos));
+      this._transformUpdateRequired = false;
+    }
+    return this._transformedPoints;
   }
-  rotate(angle) {
-    this.updateCenter();
-    this.rotateFrom(angle, this.pos);
+  update(dt) {}
+  rotate(amount) {
+    this.angle += amount;
+    this._transformUpdateRequired = true;
   }
-  rotateFrom(angle, center) {
-    this.points.forEach((el) => VectorE.set(el, Vector.rotateFrom(el, angle, center)));
+  rotateTo(angle) {
+    this.angle = angle;
+    this.transformUpdateRequired = true;
+  }
+  rotateFrom(amount, center) {
+    this.angle += amount;
+    const move = Vector.sub(Vector.rotateFrom(this.pos, amount, center), this.pos);
+    VectorE.add(this.pos, move);
+    this._transformUpdateRequired = true;
   }
   move(vector) {
     VectorE.add(this.pos, vector);
-    this.points.forEach((point) => {
-      VectorE.add(point, vector);
-    });
+    this._transformUpdateRequired = true;
   }
-  updateCenter() {
-    if (!this.points.length) return;
-    this.pos = Vector.average(this.points);
+  moveTo(vector) {
+    VectorE.set(this.pos, vector);
+    this._transformUpdateRequired = true;
   }
   render(ctx) {
     ctx.strokeStyle = this.color;
     ctx.beginPath();
-    if (this.points.length > 1) {
-      ctx.moveTo(...this.points[0]);
-      for (let i = 1; i < this.points.length; i++) {
-        ctx.lineTo(...this.points[i]);
+    const points = this.transformedPoints;
+    if (points.length > 1) {
+      ctx.moveTo(...points[0]);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(...points[i]);
       }
-      ctx.lineTo(...this.points[0]);
+      ctx.lineTo(...points[0]);
     }
     ctx.stroke();
 
@@ -46,21 +69,27 @@ export class Body {
 }
 
 export class BodyBox extends Body {
-  constructor(x, y, width = 100, height = 100) {
-    super(x, y);
-    this.size = [width, height];
-    this.halfSize = Vector.scale(this.size, 0.5);
-    this.points.push([x - this.halfSize[0], y - this.halfSize[1]]);
-    this.points.push([x + this.halfSize[0], y - this.halfSize[1]]);
-    this.points.push([x + this.halfSize[0], y + this.halfSize[1]]);
-    this.points.push([x - this.halfSize[0], y + this.halfSize[1]]);
+  constructor(pos, size = [100, 100], density = 1, option = {}) {
+    super(pos, density, option);
+    this.size = Vector.clone(size);
+    this.area = size[0] * size[1];
+    this.mass = this.density * this.area;
+    this.type = "box";
+    const halfSize = Vector.scale(this.size, 0.5);
+    this.points.push([-halfSize[0], -halfSize[1]]);
+    this.points.push([halfSize[0], -halfSize[1]]);
+    this.points.push([halfSize[0], halfSize[1]]);
+    this.points.push([-halfSize[0], halfSize[1]]);
+    this._transformUpdateRequired = true;
   }
 }
 export class BodyCircle extends Body {
-  constructor(x, y, radius = 50) {
-    super(x, y);
-    this.type = "circle";
+  constructor(pos, radius = 50, density = 1, option = {}) {
+    super(pos, density, option);
     this.radius = radius;
+    this.area = radius * radius * Math.PI;
+    this.mass = this.density * this.area;
+    this.type = "circle";
   }
   move(vector) {
     VectorE.add(this.pos, vector);

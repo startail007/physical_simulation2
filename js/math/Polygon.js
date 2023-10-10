@@ -19,6 +19,7 @@ export class Polygon {
 
   //   return inside;
   // }
+  static deviation = 0.001;
   static inPolygon(point, points) {
     function isLeft(x0, y0, x1, y1, x, y) {
       return (x1 - x0) * (y - y0) - (x - x0) * (y1 - y0);
@@ -57,7 +58,7 @@ export class Polygon {
     return wn !== 0;
   }
   static intersectPolygons(pointsA, pointsB) {
-    let normal = [0, 0];
+    let normal = Vector.zero();
     let depth = Number.POSITIVE_INFINITY;
 
     const axes = [...Polygon.getNormals(pointsA), ...Polygon.getNormals(pointsB)];
@@ -65,7 +66,10 @@ export class Polygon {
     for (const axis of axes) {
       const projection1 = Polygon.projectPoints(pointsA, axis);
       const projection2 = Polygon.projectPoints(pointsB, axis);
-      if (projection1.min > projection2.max || projection2.min > projection1.max) {
+      if (
+        projection1.min >= projection2.max - Polygon.deviation ||
+        projection2.min >= projection1.max - Polygon.deviation
+      ) {
         return;
       }
       const axisDepth = Math.min(projection2.max - projection1.min, projection1.max - projection2.min);
@@ -82,14 +86,17 @@ export class Polygon {
   }
 
   static intersectCirclePolygon(circleCenter, circleRadius, points) {
-    let normal = [0, 0];
+    let normal = Vector.zero();
     let depth = Number.POSITIVE_INFINITY;
     const axes = Polygon.getNormals(points);
     let bool = false;
     for (const axis of axes) {
       const projection1 = Polygon.projectPoints(points, axis);
       const projection2 = Polygon.projectCircle(circleCenter, circleRadius, axis);
-      if (projection1.min > projection2.max || projection2.min > projection1.max) {
+      if (
+        projection1.min >= projection2.max - Polygon.deviation ||
+        projection2.min >= projection1.max - Polygon.deviation
+      ) {
         return;
       }
       const axisDepth = Math.min(projection2.max - projection1.min, projection1.max - projection2.min);
@@ -105,7 +112,10 @@ export class Polygon {
     const axis = Vector.normalize(Vector.sub(cp, circleCenter));
     const projection1 = Polygon.projectPoints(points, axis);
     const projection2 = Polygon.projectCircle(circleCenter, circleRadius, axis);
-    if (projection1.min > projection2.max || projection2.min > projection1.max) {
+    if (
+      projection1.min > projection2.max - Polygon.deviation ||
+      projection2.min > projection1.max - Polygon.deviation
+    ) {
       return;
     }
     const axisDepth = Math.min(projection2.max - projection1.min, projection1.max - projection2.min);
@@ -122,13 +132,13 @@ export class Polygon {
     return { normal, depth };
   }
   static intersectCircles(centerA, radiusA, centerB, radiusB) {
-    let normal = [0, 0];
+    let normal = Vector.zero();
     let depth = 0;
 
     const distance = Vector.distance(centerA, centerB);
     const radii = radiusA + radiusB;
 
-    if (distance >= radii) {
+    if (distance >= radii - Polygon.deviation) {
       return;
     }
 
@@ -199,15 +209,12 @@ export class Polygon {
     return normals;
   }
   static collision_sat(pointsA, pointsB) {
-    function overlap(projection1, projection2) {
-      return projection1.min <= projection2.max && projection1.max >= projection2.min;
-    }
     const axes = [...Polygon.getNormals(pointsA), ...Polygon.getNormals(pointsB)];
 
     for (const axis of axes) {
       const projection1 = Polygon.projectPoints(pointsA, axis);
       const projection2 = Polygon.projectPoints(pointsB, axis);
-      if (!overlap(projection1, projection2)) {
+      if (projection1.min >= projection2.max || projection2.min >= projection1.max) {
         return false;
       }
     }

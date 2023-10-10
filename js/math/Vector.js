@@ -1,4 +1,7 @@
 export class Vector {
+  static zero() {
+    return [0, 0];
+  }
   static clone(vector) {
     return [...vector];
   }
