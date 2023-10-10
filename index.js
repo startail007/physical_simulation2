@@ -1,77 +1,31 @@
-import { ShapeBox } from "./js/shape.js";
-import { Line, Vector, VectorE } from "./js/vector.js";
+import { Polygon } from "./js/math/Polygon.js";
+import { BodyBox, BodyCircle } from "./js/physics/Body.js";
+import { Vector, VectorE } from "./js/math/Vector.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const cWidth = canvas.width;
 const cHeight = canvas.height;
 
-const shapes = [];
-const shape1 = new ShapeBox(200, 80, 150, 50);
-// shape1.rotate(Math.PI * 0.25);
-shapes.push(shape1);
+const bodyList = [];
+const body1 = new BodyBox(200, 80, 100, 100);
+// body1.rotate(Math.PI * 0.25);
+bodyList.push(body1);
 for (let i = 0; i < 10; i++) {
-  const shape = new ShapeBox(
+  const body = new BodyBox(
     50 + Math.random() * 700,
     50 + Math.random() * 500,
     50 + Math.random() * 30,
     50 + Math.random() * 30
   );
-  shape.rotate(2 * Math.PI * Math.random());
-  shapes.push(shape);
+  body.rotate(2 * Math.PI * Math.random());
+  bodyList.push(body);
 }
-shapes.push(new ShapeBox(200, 200, 50, 50));
-shapes.push(new ShapeBox(240, 200, 50, 50));
 
-const getNormals = (points) => {
-  const normals = [];
-
-  for (let i = 0; i < points.length; i++) {
-    const edge = [points[(i + 1) % points.length][0] - points[i][0], points[(i + 1) % points.length][1] - points[i][1]];
-
-    normals.push(Vector.normalize(Vector.normal(edge)));
-  }
-
-  return normals;
-};
-
-const project = (points, axis) => {
-  let min = Infinity;
-  let max = -Infinity;
-
-  points.forEach((point) => {
-    const projected = Vector.dot(point, axis);
-    min = Math.min(min, projected);
-    max = Math.max(max, projected);
-  });
-
-  return { min, max };
-};
-
-const intersectPolygons = (verticesA, verticesB) => {
-  let normal = [0, 0];
-  let depth = Number.POSITIVE_INFINITY;
-
-  const axes = [...getNormals(verticesA), ...getNormals(verticesB)];
-  let bool = false;
-  axes.forEach((axis) => {
-    const projection1 = project(verticesA, axis);
-    const projection2 = project(verticesB, axis);
-    if (projection1.min > projection2.max || projection2.min > projection1.max) {
-      return;
-    }
-    const axisDepth = Math.min(projection2.max - projection1.min, projection1.max - projection2.min);
-    if (axisDepth < depth) {
-      depth = axisDepth;
-      normal = axis;
-      bool = projection1.max > projection2.max;
-    }
-  });
-  if (bool) {
-    normal = Vector.negate(normal);
-  }
-  return { normal, depth };
-};
+bodyList.push(new BodyCircle(310, 200, 25));
+bodyList.push(new BodyBox(200, 200, 50, 50));
+bodyList.push(new BodyBox(240, 200, 50, 50));
+bodyList.push(new BodyCircle(310, 240, 25));
 
 const mPos = [0, 0];
 const center = [0, 0];
@@ -87,28 +41,48 @@ const animate = () => {
   ctx.clearRect(0, 0, cWidth, cHeight);
 
   VectorE.set(center, Vector.mix(center, mPos, 0.4));
-  shape1.updateCenter();
-  const move = Vector.sub(center, shape1.center);
-  shape1.move(move);
-  shape1.rotate(0.02);
-
-  for (let i = 0; i < shapes.length - 1; i++) {
-    for (let j = i + 1; j < shapes.length; j++) {
-      const shapeA = shapes[i];
-      const shapeB = shapes[j];
-      if (shapeA.SATCollision(shapeB)) {
-        const { normal, depth } = intersectPolygons(
-          shapeA.points.map((el) => el.pos),
-          shapeB.points.map((el) => el.pos)
-        );
-        shapeA.move(Vector.scale(normal, -depth / 2));
-        shapeB.move(Vector.scale(normal, depth / 2));
+  body1.updateCenter();
+  const move = Vector.sub(center, body1.pos);
+  body1.move(move);
+  // body1.rotate(0.02);
+  for (let i = 0; i < bodyList.length - 1; i++) {
+    for (let j = i + 1; j < bodyList.length; j++) {
+      const bodyA = bodyList[i];
+      const bodyB = bodyList[j];
+      if (bodyA.type == "polygon" && bodyB.type == "polygon") {
+        const info = Polygon.intersectPolygons(bodyA.points, bodyB.points);
+        if (info) {
+          const { normal, depth } = info;
+          bodyA.move(Vector.scale(normal, -depth / 2));
+          bodyB.move(Vector.scale(normal, depth / 2));
+        }
+      } else if (bodyA.type == "polygon" && bodyB.type == "circle") {
+        const info = Polygon.intersectCirclePolygon(bodyB.pos, bodyB.radius, bodyA.points);
+        if (info) {
+          const { normal, depth } = info;
+          bodyA.move(Vector.scale(normal, -depth / 2));
+          bodyB.move(Vector.scale(normal, depth / 2));
+        }
+      } else if (bodyB.type == "polygon" && bodyA.type == "circle") {
+        const info = Polygon.intersectCirclePolygon(bodyA.pos, bodyA.radius, bodyB.points);
+        if (info) {
+          const { normal, depth } = info;
+          bodyB.move(Vector.scale(normal, -depth / 2));
+          bodyA.move(Vector.scale(normal, depth / 2));
+        }
+      } else if (bodyA.type == "circle" && bodyB.type == "circle") {
+        const info = Polygon.intersectCircles(bodyA.pos, bodyA.radius, bodyB.pos, bodyB.radius);
+        if (info) {
+          const { normal, depth } = info;
+          bodyA.move(Vector.scale(normal, -depth / 2));
+          bodyB.move(Vector.scale(normal, depth / 2));
+        }
       }
     }
   }
-  for (let i = 0; i < shapes.length; i++) {
-    const shape = shapes[i];
-    shape.render(ctx);
+  for (let i = 0; i < bodyList.length; i++) {
+    const body = bodyList[i];
+    body.render(ctx);
   }
 
   ctx.font = "18px Noto Sans TC";
