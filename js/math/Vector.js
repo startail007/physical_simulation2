@@ -1,3 +1,5 @@
+import { Float } from "./Float.js";
+
 export class Vector {
   static zero() {
     return [0, 0];
@@ -72,6 +74,7 @@ export class Vector {
     return Vector.add(Vector.negate(force), projection);
   }
   static average(vectors) {
+    if (vectors.length == 1) return Vector.clone(vectors[0]);
     const sum = [0, 0];
     if (vectors.length) {
       vectors.forEach((pos) => {
@@ -80,6 +83,10 @@ export class Vector {
       VectorE.scale(sum, 1 / vectors.length);
     }
     return sum;
+  }
+  static nearlyEqual(vector0, vector1) {
+    const v = Vector.sub(vector0, vector1);
+    return Vector.dot(v, v) < Float.verySmallAmount * Float.verySmallAmount;
   }
 }
 export class VectorE {
