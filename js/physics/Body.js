@@ -11,7 +11,7 @@ export class Body {
     this.density = 1;
     this.mass = 0;
     this.invMass = 0;
-    this.restitution = 0.5;
+    this.restitution = 0.4;
     this.area = 0;
     this.inertia = 0;
     this.invInertia = 0;
@@ -83,7 +83,7 @@ export class BodyBox extends Body {
     if (!this.isStatic) {
       this.mass = this.density * this.area;
       this.invMass = 1 / this.mass;
-      this.inertia = (1 / 2) * this.mass * (this.size[0] * this.size[0] * 0.25 + this.size[1] * this.size[1] * 0.25);
+      this.inertia = (1 / 12) * this.mass * (this.size[0] * this.size[0] + this.size[1] * this.size[1]);
       this.invInertia = 1 / this.inertia;
     }
     const halfSize = Vector.scale(this.size, 0.5);
