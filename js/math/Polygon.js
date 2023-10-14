@@ -270,10 +270,11 @@ export class Polygon {
     const normals = [];
 
     for (let i = 0; i < points.length; i++) {
-      const edge = [
-        points[(i + 1) % points.length][0] - points[i][0],
-        points[(i + 1) % points.length][1] - points[i][1],
-      ];
+      const edge = Vector.sub(points[(i + 1) % points.length], points[i]);
+      // const edge = [
+      //   points[(i + 1) % points.length][0] - points[i][0],
+      //   points[(i + 1) % points.length][1] - points[i][1],
+      // ];
 
       normals.push(Vector.normalize(Vector.normal(edge)));
     }
