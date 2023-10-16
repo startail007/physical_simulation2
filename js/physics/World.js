@@ -10,6 +10,7 @@ export class World {
     this.totalIterations = 20;
     this.gravity = [0, 9.81];
     this.bodyList = new Set();
+    this.stickList = [];
     this.contactPairs = [];
     this._arrayBodyList = [];
     this._arrayBodyListUpdateRequired = false;
@@ -222,13 +223,28 @@ export class World {
   }
 
   update(dt) {
-    for (let i = 0; i < this.totalIterations; i++) {
-      const bodyList = this.arrayBodyList;
-      for (let i = 0; i < bodyList.length; i++) {
-        const body = bodyList[i];
+    let points = new Set();
+    this.stickList.forEach((stick) => {
+      points.add(stick.A);
+      points.add(stick.B);
+    });
+    points = Array.from(points);
+    const stickList = this.stickList;
+    const bodyList = this.arrayBodyList;
+    for (let k = 0; k < this.totalIterations; k++) {
+      points.forEach((point) => {
+        point.addForce(this.gravity);
+        point.update(dt / this.totalIterations);
+      });
+      stickList.forEach((stick) => {
+        stick.update(dt / this.totalIterations);
+      });
+
+      bodyList.forEach((body) => {
         body.addForce(this.gravity);
         body.update(dt / this.totalIterations);
-      }
+      });
+
       // this.contactPairs = [];
       const collisions = [];
       const move = new Array(bodyList.length).fill().map(() => []);

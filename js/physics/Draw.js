@@ -33,6 +33,11 @@ export class Draw {
     ctx.beginPath();
     ctx.arc(...pos, radius, 0, 2 * Math.PI);
   }
+  static drawLine(ctx, posA, posB) {
+    ctx.beginPath();
+    ctx.moveTo(...posA);
+    ctx.lineTo(...posB);
+  }
   renderAABB(ctx, body, color = "#0000ff") {
     if (!this.aabb) return;
     const rect = body.aabb.rect;
@@ -103,5 +108,10 @@ export class Draw {
     });
     this.renderCollisions(ctx, world.contactPairs);
     this.renderContact(ctx, world.contactPairs);
+    world.stickList.forEach((stick) => {
+      ctx.strokeStyle = "#ff00ff";
+      Draw.drawLine(ctx, stick.A.pos, stick.B.pos);
+      ctx.stroke();
+    });
   }
 }

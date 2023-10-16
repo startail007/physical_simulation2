@@ -1,8 +1,10 @@
 import { BodyBox, BodyCircle } from "./js/physics/Body.js";
 import { Vector, VectorE } from "./js/math/Vector.js";
 import { World } from "./js/physics/World.js";
+import { Stick } from "./js/physics/Stick.js";
 import { FPS } from "./js/state.js";
 import { Draw } from "./js/physics/Draw.js";
+import { Point } from "./js/physics/point.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -23,6 +25,13 @@ world.addBody(body1);
 // }
 
 world.addBody(new BodyCircle([350, 100], 25));
+
+const point0 = new Point([300, 50], true);
+const point1 = new Point([350, 50]);
+const point2 = new Point([400, 50]);
+world.stickList.push(new Stick(point0, point1));
+// world.stickList.push(new Stick(point1, point2));
+
 world.addBody(new BodyCircle([350, 240], 25));
 world.addBody(new BodyBox([320, 100], [50, 50]));
 world.addBody(new BodyCircle([310, 280], 25));
@@ -43,7 +52,7 @@ world.addBody(new BodyBox([0, 350], [100, 700], { isStatic: true }));
 world.addBody(new BodyBox([1000, 350], [100, 700], { isStatic: true }));
 
 world.addBody(new BodyBox([400, 300], [400, 50], { isStatic: true, angle: 0.05 * Math.PI }));
-// world.addBody(new BodyBox([600, 300], [300, 50], { isStatic: true }));
+world.addBody(new BodyBox([600, 300], [300, 50], { isStatic: true }));
 const draw = new Draw();
 
 const mPos = [0, 0];
