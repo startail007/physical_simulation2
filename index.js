@@ -4,7 +4,7 @@ import { World } from "./js/physics/World.js";
 import { Stick } from "./js/physics/Stick.js";
 import { FPS } from "./js/state.js";
 import { Draw } from "./js/physics/Draw.js";
-import { Point } from "./js/physics/point.js";
+import { Point } from "./js/physics/Point.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
