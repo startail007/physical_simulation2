@@ -23,6 +23,7 @@ export class Body {
     this._transformUpdateRequired = false;
     this._aabb = new AABB([0, 0], [0, 0]);
     this._aabbUpdateRequired = false;
+    this.aaa = false;
     Object.assign(this, option);
   }
   get transformedPoints() {
@@ -32,9 +33,40 @@ export class Body {
     }
     return this._transformedPoints;
   }
+  abc(dt) {
+    if (!this.aaa) return;
+    const offset = Vector.sub(this.transformedPoints[0], [295, 75]);
+    const normal = Vector.normalize(offset);
 
+    const e = this.restitution;
+
+    const ra = Vector.sub([295, 75], this.pos);
+
+    const raPerp = Vector.normal(ra);
+
+    const angularLinearVelA = Vector.scale(raPerp, this.angularVel);
+
+    const relativeVel = Vector.negate(Vector.add(this.linearVel, angularLinearVelA));
+
+    const contactVelocityMag = Vector.dot(relativeVel, normal);
+
+    if (contactVelocityMag > 0) return;
+    const raPerpDotN = Vector.dot(raPerp, normal);
+
+    const denom = this.invMass + raPerpDotN * raPerpDotN * this.invInertia;
+
+    const j = (-(1 + e) * contactVelocityMag) / denom;
+
+    const impulse = Vector.scale(normal, j);
+    VectorE.sub(this.pos, offset);
+    VectorE.sub(this.linearVel, offset);
+    VectorE.sub(this.linearVel, Vector.scale(impulse, this.invMass));
+    this.angularVel -= Vector.cross(ra, impulse) * this.invInertia;
+  }
   update(dt) {
     if (this.isStatic) return;
+    this.abc(dt);
+
     VectorE.add(this.linearVel, Vector.scale(this.force, dt));
     VectorE.add(this.pos, Vector.scale(this.linearVel, dt));
     this.angle += this.angularVel * dt;

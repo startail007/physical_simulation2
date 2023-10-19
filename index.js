@@ -24,16 +24,17 @@ world.addBody(body1);
 //   world.addBody(body);
 // }
 
-world.addBody(new BodyCircle([350, 100], 25));
+// world.addBody(new BodyCircle([350, 100], 25));
 
-const point0 = new Point([300, 50], true);
-const point1 = new Point([350, 50]);
-const point2 = new Point([400, 50]);
-world.stickList.push(new Stick(point0, point1));
+// const point0 = new Point([300, 50], true);
+// const point1 = new Point([350, 50]);
+// const point2 = new Point([400, 50]);
+// world.stickList.push(new Stick(point0, point1));
 // world.stickList.push(new Stick(point1, point2));
-
+const body2 = new BodyBox([320, 100], [50, 50]);
+body2.aaa = true;
+world.addBody(body2);
 world.addBody(new BodyCircle([350, 240], 25));
-world.addBody(new BodyBox([320, 100], [50, 50]));
 world.addBody(new BodyCircle([310, 280], 25));
 world.addBody(new BodyCircle([310, 320], 25));
 world.addBody(new BodyCircle([400, 320], 25));
