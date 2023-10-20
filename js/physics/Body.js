@@ -168,7 +168,7 @@ export class BodyCircle extends Body {
     }
     return this._aabb;
   }
-  move(vector) {
-    VectorE.add(this.pos, vector);
+  move(amount) {
+    VectorE.add(this.pos, amount);
   }
 }
